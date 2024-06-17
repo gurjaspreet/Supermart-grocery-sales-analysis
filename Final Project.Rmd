@@ -1,0 +1,241 @@
+---
+title: "Summer Training Project - Data Analytics"
+author: "Gurjaspreet Singh (21BCS2669)"
+date: '2022-07-03'
+output:
+  html_document: default
+  pdf_document: default
+---
+
+## Installing and Loading required packages
+
+In this project, I will be using Tidyverse and janitor packages. We need to install and load these packages in order to run the code.
+
+```{r Installing and loading tidyverse package, results = FALSE, message=FALSE}
+install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+library(tidyverse)
+```
+
+```{r Installing and loading janitor package, results = FALSE, message=FALSE}
+install.packages("janitor", repos = "http://cran.us.r-project.org")
+library(janitor)
+```
+
+## Importing the Data
+
+The dataset used in this project is of a supermarket. The dataset has data on orders placed by customers on a grocery delivery application.
+
+The dataset consists of the orders are placed by customers living in the state of Tamil Nadu, India.
+
+[Link to the dataset](https://www.kaggle.com/datasets/mohamedharris/supermart-grocery-sales-retail-analytics-dataset)
+
+```{r Importing Grocery sales data}
+data <- read_csv("Supermart Grocery Sales - Retail Analytics Dataset.csv")
+```
+
+## Inspecting and cleaning data
+
+We can use the View() function to view the dataset.
+
+```{r Looking at data}
+View(data)
+```
+
+The rows names contains capital characters and spaces which can create problems during analysis, so we need to clean the column names by using clean_names() function.
+
+```{r Cleaning column names}
+sgs_data <- data %>% clean_names()
+```
+
+We can use the colnames() function to view only the column names of the dataset.
+
+```{r Viewing column names}
+colnames(sgs_data)
+```
+
+
+We can also use head() function to view only upper five rows of the dataset.
+
+```{r head function}
+head(sgs_data)
+```
+
+In order to analyse our data we can use the glimpse() function to know about about number of rows and columns in the dataset as well as a summary of the dataset.
+
+```{r glimpse function}
+glimpse(sgs_data)
+```
+
+## Regional Analysis of Data
+
+After viewing the dataset we know that the sales data is based on sales in the North, South, East, West and Central region of the state. We can use the group_by() function to group Region and Category and use the mutate() function to add another column that will contain total profit according to regions and categories.
+
+```{r filtering the data}
+sgs_grp_region <- sgs_data %>% 
+  group_by(region, category) %>% 
+  summarise(total_profit = sum(profit))
+```
+
+```{r View the filtered data}
+View(sgs_grp_region)
+```
+
+We can plot a grouped bar for the same using ggplot() function present in the ggplot2 library in tidyverse package and add different layers to it.
+
+```{r Grouped Bar Chart}
+ggplot(sgs_grp_region, aes(factor(category), total_profit, fill = region)) + 
+  geom_bar(stat="identity", position = "dodge") + 
+  ggtitle("Regional Analysis of data") +
+  xlab("Category") + ylab("Total Profit") +
+  scale_fill_brewer(palette = "Set1")
+```
+
+## Categorical Analysis of Data
+
+The data consists of following seven categories:
+
+1. Bakery
+2. Beverages
+3. Eggs, Meat & Fish
+4. Food Grains
+5. Fruits & Veggies
+6. Oil & Masala
+7. Snacks
+
+We can filter and change data to get relation between Category and mean profit, and Category and total profit.
+
+```{r filtering and changing data}
+sgs_cat_profit <- sgs_data %>% 
+  group_by(category) %>% 
+  summarise(mean_profit = mean(profit), 
+            total_profit = sum(profit),
+            )
+```
+
+```{r view the data}
+View(sgs_cat_profit)
+```
+
+We can now visualize the data using ggplot() function and geom_bar() for plotting a bar chart.
+
+```{r Category vs. mean profit}
+ggplot(data = sgs_cat_profit) +
+  geom_bar(stat='identity', aes(x=category, y=mean_profit), fill = "#0099f9") +
+  labs(title = "Category vs. mean profit") +
+  theme_classic()
+```
+
+```{r Category vs. total profit}
+ggplot(data = sgs_cat_profit) +
+  geom_bar(stat='identity', aes(x=category, y=total_profit), fill = "#0099f9") +
+  labs(title = "Category vs. total profit") +
+  theme_classic()
+```
+
+We will now add a row to the existing data using mutate() function that will consist of percentage of that category in total profit and use the round() function to round the percentage to two decimal points.
+
+```{r adding percentage row to the data}
+sgs_cat_profit <- sgs_cat_profit %>%
+  mutate(percent_profit = 100*total_profit/sum(total_profit)) 
+sgs_cat_profit <- sgs_cat_profit %>%
+  mutate(percent_profit = round(percent_profit, 2)) 
+```
+
+```{r Plot a Pie chart to show percentages}
+ggplot(sgs_cat_profit, aes(x="", y=percent_profit, fill=category)) +
+  geom_col(width = 1) +
+  geom_text(aes(label = percent_profit), position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start=0)
+```
+
+## Sub-categorical analysis of data
+
+The data is divided into the following sub-categories:
+
+1. Atta & Flour
+2. Biscuits
+3. Breads & Buns
+4. Cakes
+5. Chicken
+6. Chocolates
+7. Cookies
+8. Dals & Pulses
+9. Edible Oil & Ghee
+10. Eggs
+11. Fish
+12. Fresh Fruits
+13. Fresh Vegetables
+14. Health Drinks
+15. Masalas
+16. Mutton
+17. Noodles
+18. Organic Fruits
+19. Organic Staples
+20. Organic Vegetables
+21. Rice
+22. Soft Drinks
+23. Spices
+
+We will now analyze the data using sub-categories in the following ways:
+- sub-category vs. mean profit
+- sub-category vs. median profit
+- sub-category vs. total profit
+
+```{r sub-categorical analysis}
+sgs_sub_category <- sgs_data %>% 
+  group_by(sub_category) %>% 
+  summarise(mean_profit = mean(profit),
+            median_profit = median(profit),
+            total_profit = sum(profit)
+            )
+```
+
+```{r view the filtered data}
+View(sgs_sub_category)
+```
+
+We will now visualize the data.
+
+```{r Sub category vs. mean profit}
+ggplot(data = sgs_sub_category) +
+  geom_bar(stat='identity', aes(x=sub_category, y=mean_profit), fill = "#0099f9") +
+  labs(title = "Sub category vs. mean profit") +
+  theme_classic() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+```{r Sub category vs. median profit}
+ggplot(data = sgs_sub_category) +
+  geom_bar(stat='identity', aes(x=sub_category, y=median_profit), fill = "#0099f9") +
+  labs(title = "Sub category vs. median profit") +
+  theme_classic() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+```{r Sub category vs. total profit}
+ggplot(data = sgs_sub_category) +
+  geom_bar(stat='identity', aes(x=sub_category, y=total_profit), fill = "#0099f9") +
+  labs(title = "Sub category vs. total profit") +
+  theme_classic() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+## Figuring out Top customers
+
+One of the strategy that companies use to make more profit is to provide offers to its customers. We will now sort the data using arrange() function to find the top customers and use the slice() to shorten the list.
+
+```{r finding top customers}
+top_customers <- sgs_data %>% 
+  arrange(desc(profit)) %>% 
+  slice(1:10)
+```
+
+```{r viewing top customers}
+View(top_customers)
+```
+
+
+
+
+
+
+
+
+
